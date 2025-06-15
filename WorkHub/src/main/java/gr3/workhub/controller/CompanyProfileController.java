@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(
-        name = "<❌ Đang lỗi tạm thời bỏ qua API này> Company Profile",
+        name = " Company Profile",
         description = "API quản lý hồ sơ công ty, bao gồm tạo mới, lấy chi tiết và danh sách tất cả công ty."
 )
 @RestController

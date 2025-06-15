@@ -178,4 +178,18 @@ public class InterviewSessionService {
         session.setTokenCandidate(UUID.randomUUID());
         return sessionRepo.save(session);
     }
+
+    // Extract recruiter code by recruiter ID
+    public String getRecruiterCodeByUserId(Integer userId) {
+        InterviewSession session = sessionRepo.findTopByRecruiter_IdOrderByCreatedAtDesc(userId)
+                .orElseThrow(() -> new IllegalArgumentException("No session found for recruiter"));
+        return session.getCodeRecruiter();
+    }
+
+    // Handle redirect logic by recruiter token
+    public String getRecruiterRedirectUrlByToken(String jwt) {
+        String recruiterId = parseRecruiterIdFromJwt(jwt);
+        String recruiterCode = getRecruiterCodeByUserId(Integer.parseInt(recruiterId));
+        return "https://workhub.app.100ms.live/preview/" + recruiterCode;
+    }
 }

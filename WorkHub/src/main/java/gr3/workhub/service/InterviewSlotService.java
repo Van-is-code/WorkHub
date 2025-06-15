@@ -1,7 +1,11 @@
 package gr3.workhub.service;
 
+import gr3.workhub.dto.InterviewScheduleDTO;
 import gr3.workhub.entity.*;
 import gr3.workhub.repository.*;
+import gr3.workhub.security.JwtUtil;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -10,6 +14,7 @@ import org.springframework.http.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ public class InterviewSlotService {
     private final EmailService emailService;
     private final InterviewSessionRepository sessionRepo;
     private final RestTemplate restTemplate;
+    private final JwtUtil jwtUtil;
 
     public InterviewSlot createSlot(String sessionId, String candidateId, String jobId) {
         boolean applied = applicationRepo.existsByJobIdAndCandidateId(
@@ -42,6 +48,7 @@ public class InterviewSlotService {
         slot.setCandidate(candidate);
         slot.setJob(job);
         slot.setCreatedAt(LocalDateTime.now());
+        slot.setStartTime(session.getStartTime()); // Set startTime from InterviewSession
         slot = slotRepo.save(slot);
 
         // Use tokenCandidate for the join link
@@ -75,4 +82,32 @@ public class InterviewSlotService {
 
         return slot;
     }
+
+    public List<InterviewScheduleDTO> getScheduleByToken(HttpServletRequest request) {
+        Integer candidateId = getCandidateIdFromToken(request);
+        List<InterviewSlot> slots = slotRepo.findByCandidateId(candidateId);
+        return slots.stream()
+                .map(slot -> new InterviewScheduleDTO(
+                        slot.getJob().getTitle(),
+                        slot.getInterviewSession().getTitle(),
+                        slot.getStartTime()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    // Extract candidate id from JWT token in request
+    private Integer getCandidateIdFromToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+            org.springframework.security.oauth2.jwt.Jwt decoded = jwtUtil.decodeToken(token);
+            Object idClaim = decoded.getClaim("id"); // or "candidateId" if that's your claim name
+            if (idClaim == null) {
+                throw new IllegalArgumentException("JWT does not contain candidate id");
+            }
+            return Integer.parseInt(idClaim.toString());
+        }
+        throw new RuntimeException("Invalid token");
+    }
+
 }

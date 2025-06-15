@@ -9,5 +9,6 @@ import java.util.UUID;
 
 public interface InterviewSessionRepository extends JpaRepository<InterviewSession, UUID> {
     Optional<InterviewSession> findByTokenCandidate(UUID tokenCandidate);
+    Optional<InterviewSession> findTopByRecruiter_IdOrderByCreatedAtDesc(Integer recruiterId);
     List<InterviewSession> findByRecruiter_Id(Integer recruiter);
 }

@@ -9,6 +9,8 @@ import org.springframework.web.client.RestTemplate;
 public class WorkHubApplication {
 
     public static void main(String[] args) {
+        // Set default timezone to GMT+7
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("GMT+7"));
         SpringApplication.run(WorkHubApplication.class, args);
     }
 
